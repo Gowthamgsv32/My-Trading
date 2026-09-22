@@ -21,9 +21,13 @@ feed can't be called from a browser). So the app is two parts:
 - **`src/`** — the React frontend (deployed to GitHub Pages). It connects to
   the relay's WebSocket and renders streaming quotes.
 - **`server/`** — a Node relay that holds your Angel One credentials, logs
-  in, subscribes to the live `SmartWebSocketV2` feed, and re-broadcasts ticks
-  to the frontend. **It must run on a host that can keep secrets** (your
-  machine, Render, Railway, Fly.io, a VPS…) — never on GitHub Pages.
+  in, seeds an accurate snapshot from the
+  [Market Data REST quote API](https://smartapi.angelone.in/docs/MarketData),
+  then subscribes to the live `SmartWebSocketV2` feed and re-broadcasts ticks
+  to the frontend (with the REST API as a fallback for symbols the socket
+  hasn't ticked recently, e.g. when the market is closed). **It must run on a
+  host that can keep secrets** (your machine, Render, Railway, Fly.io, a VPS…)
+  — never on GitHub Pages.
 
 Without credentials the relay runs a **built-in simulator** (realistic
 random-walk prices) so the whole app works out of the box.
