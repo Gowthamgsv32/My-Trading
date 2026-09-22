@@ -73,6 +73,28 @@ watchlist with the `WATCHLIST` env var (comma-separated NSE symbols).
 > ⚠️ These are real brokerage credentials. Keep `.env` private, never commit
 > it, and run the relay only on a host you control.
 
+### Deploy the relay to Render (one-click blueprint)
+
+A [Render Blueprint](https://render.com/docs/blueprint-spec) is included at
+`render.yaml`, so you don't have to run the relay on your own machine:
+
+1. In the [Render dashboard](https://dashboard.render.com), click
+   **New + → Blueprint** and select this repository. Render reads
+   `render.yaml` and creates the `my-trading-relay` web service.
+2. Open the service's **Environment** tab and set your `SMARTAPI_*` values
+   (they're marked `sync: false`, so they're never stored in git). Leave them
+   blank to run in simulator mode.
+3. Deploy. Your relay is now at `https://my-trading-relay.onrender.com` with a
+   secure WebSocket at `wss://my-trading-relay.onrender.com`.
+
+Then tell the GitHub Pages frontend where the relay is: add a repository
+**Actions variable** (or set it in the build) named `VITE_FEED_WS_URL` =
+`wss://my-trading-relay.onrender.com` and re-run the deploy workflow. The
+live site will then connect to your relay automatically.
+
+> Render's free tier spins the service down after inactivity, so the first
+> connection after an idle period takes a few seconds to wake it up.
+
 ## Deployment
 
 Deployment is automated with GitHub Actions

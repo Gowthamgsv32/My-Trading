@@ -37,6 +37,12 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Point the frontend at your deployed backend relay. Set this as a
+          # repository Actions variable (Settings → Secrets and variables →
+          # Actions → Variables). Must be a wss:// URL for the https Pages site.
+          # If unset, the app falls back to ws://localhost:8080 for local dev.
+          VITE_FEED_WS_URL: ${{ vars.VITE_FEED_WS_URL }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
