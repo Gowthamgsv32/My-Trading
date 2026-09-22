@@ -22,12 +22,44 @@ const latest = new Map(
   ]),
 )
 let feedStatus = { mode: getConfig() ? 'live' : 'simulated', connected: false }
+let outboundIp = null
+
+// Discover the public IP this service makes outbound requests from, so it can
+// be whitelisted in the Angel One SmartAPI app (which requires a single static
+// IP). Logged prominently and exposed on /health. Best-effort; never fatal.
+async function detectOutboundIp() {
+  for (const url of [
+    'https://api.ipify.org?format=json',
+    'https://ifconfig.co/json',
+  ]) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
+      const body = await res.json()
+      const ip = body.ip
+      if (ip) {
+        outboundIp = ip
+        console.log(
+          `[server] outbound IP is ${ip} — whitelist THIS in your Angel One app's Primary Static IP`,
+        )
+        return
+      }
+    } catch {
+      /* try next provider */
+    }
+  }
+  console.warn('[server] could not determine outbound IP')
+}
 
 // ---- http + websocket server -------------------------------------------
 const app = express()
 app.use(cors())
 app.get('/health', (_req, res) =>
-  res.json({ ok: true, ...feedStatus, symbols: instruments.length }),
+  res.json({
+    ok: true,
+    ...feedStatus,
+    symbols: instruments.length,
+    outboundIp,
+  }),
 )
 
 const server = http.createServer(app)
@@ -89,5 +121,6 @@ async function startFeed() {
 server.listen(PORT, () => {
   console.log(`[server] listening on http://localhost:${PORT}`)
   console.log(`[server] watchlist: ${instruments.map((i) => i.symbol).join(', ')}`)
+  detectOutboundIp()
   startFeed()
 })
