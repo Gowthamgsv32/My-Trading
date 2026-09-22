@@ -21,9 +21,13 @@ feed can't be called from a browser). So the app is two parts:
 - **`src/`** — the React frontend (deployed to GitHub Pages). It connects to
   the relay's WebSocket and renders streaming quotes.
 - **`server/`** — a Node relay that holds your Angel One credentials, logs
-  in, subscribes to the live `SmartWebSocketV2` feed, and re-broadcasts ticks
-  to the frontend. **It must run on a host that can keep secrets** (your
-  machine, Render, Railway, Fly.io, a VPS…) — never on GitHub Pages.
+  in, seeds an accurate snapshot from the
+  [Market Data REST quote API](https://smartapi.angelone.in/docs/MarketData),
+  then subscribes to the live `SmartWebSocketV2` feed and re-broadcasts ticks
+  to the frontend (with the REST API as a fallback for symbols the socket
+  hasn't ticked recently, e.g. when the market is closed). **It must run on a
+  host that can keep secrets** (your machine, Render, Railway, Fly.io, a VPS…)
+  — never on GitHub Pages.
 
 Without credentials the relay runs a **built-in simulator** (realistic
 random-walk prices) so the whole app works out of the box.
@@ -72,6 +76,28 @@ watchlist with the `WATCHLIST` env var (comma-separated NSE symbols).
 
 > ⚠️ These are real brokerage credentials. Keep `.env` private, never commit
 > it, and run the relay only on a host you control.
+
+### Deploy the relay to Render (one-click blueprint)
+
+A [Render Blueprint](https://render.com/docs/blueprint-spec) is included at
+`render.yaml`, so you don't have to run the relay on your own machine:
+
+1. In the [Render dashboard](https://dashboard.render.com), click
+   **New + → Blueprint** and select this repository. Render reads
+   `render.yaml` and creates the `my-trading-relay` web service.
+2. Open the service's **Environment** tab and set your `SMARTAPI_*` values
+   (they're marked `sync: false`, so they're never stored in git). Leave them
+   blank to run in simulator mode.
+3. Deploy. Your relay is now at `https://my-trading-relay.onrender.com` with a
+   secure WebSocket at `wss://my-trading-relay.onrender.com`.
+
+Then tell the GitHub Pages frontend where the relay is: add a repository
+**Actions variable** (or set it in the build) named `VITE_FEED_WS_URL` =
+`wss://my-trading-relay.onrender.com` and re-run the deploy workflow. The
+live site will then connect to your relay automatically.
+
+> Render's free tier spins the service down after inactivity, so the first
+> connection after an idle period takes a few seconds to wake it up.
 
 ## Deployment
 

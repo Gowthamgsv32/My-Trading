@@ -1,0 +1,34 @@
+# Render Blueprint for the My-Trading backend relay.
+# Deploy: push this repo, then in the Render dashboard choose
+# "New +" → "Blueprint" and point it at this repository. Render reads this
+# file and provisions the service below.
+#
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: my-trading-relay
+    runtime: node
+    # The relay lives in the server/ subdirectory of this repo.
+    rootDir: server
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    # The server exposes GET /health returning 200 for health checks.
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Angel One SmartAPI credentials. sync:false keeps them OUT of git —
+      # set their values in the Render dashboard (Environment tab). Leave them
+      # unset to run the relay in simulator mode.
+      - key: SMARTAPI_KEY
+        sync: false
+      - key: SMARTAPI_CLIENT_CODE
+        sync: false
+      - key: SMARTAPI_PASSWORD
+        sync: false
+      - key: SMARTAPI_TOTP_SECRET
+        sync: false
+      # Optional: comma-separated NSE symbols to override the default watchlist.
+      - key: WATCHLIST
+        sync: false
