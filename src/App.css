@@ -28,6 +28,57 @@
   letter-spacing: -0.02em;
 }
 
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge--live {
+  color: #16c784;
+  background: rgba(22, 199, 132, 0.12);
+  border-color: rgba(22, 199, 132, 0.35);
+}
+
+.badge--live .badge__dot {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.badge--sim {
+  color: #e0a82e;
+  background: rgba(224, 168, 46, 0.12);
+  border-color: rgba(224, 168, 46, 0.35);
+}
+
+.badge--wait {
+  color: #8a91a3;
+  background: rgba(138, 145, 163, 0.12);
+  border-color: rgba(138, 145, 163, 0.3);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 .tagline {
   margin: 0.5rem 0 0;
   color: #8a91a3;
@@ -135,6 +186,47 @@
 
 .sym {
   font-weight: 600;
+}
+
+.price {
+  transition: background-color 0.1s ease;
+  border-radius: 4px;
+}
+
+.flash-up {
+  animation: flashUp 0.6s ease-out;
+}
+
+.flash-down {
+  animation: flashDown 0.6s ease-out;
+}
+
+@keyframes flashUp {
+  0% {
+    background-color: rgba(22, 199, 132, 0.35);
+    color: #16c784;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flashDown {
+  0% {
+    background-color: rgba(234, 57, 67, 0.35);
+    color: #ea3943;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-up,
+  .flash-down,
+  .badge--live .badge__dot {
+    animation: none;
+  }
 }
 
 .up {
