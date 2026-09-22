@@ -5,12 +5,17 @@ import { useEffect, useRef, useState } from 'react'
 // otherwise the browser blocks the insecure ws:// connection (mixed content).
 const WS_URL = import.meta.env.VITE_FEED_WS_URL || 'ws://localhost:8080'
 
+// How many recent prices to retain per symbol for the chart.
+const HISTORY_LIMIT = 180
+
 // Connects to the backend WebSocket relay and returns live quotes.
 // Reconnects automatically with exponential backoff.
 export function useLiveFeed() {
   const [status, setStatus] = useState({ state: 'connecting', mode: null })
   // symbol -> { symbol, name, ltp, close, change, ts, dir }
   const [quotes, setQuotes] = useState({})
+  // symbol -> [{ t, p }] rolling price history for charts
+  const [histories, setHistories] = useState({})
   const retryRef = useRef(0)
 
   useEffect(() => {
@@ -18,7 +23,15 @@ export function useLiveFeed() {
     let ws
     let reconnectTimer
 
-    const applyTick = (msg) =>
+    const pushHistory = (symbol, price, ts) =>
+      setHistories((prev) => {
+        const series = prev[symbol] || []
+        const next = series.concat({ t: ts ?? Date.now(), p: price })
+        if (next.length > HISTORY_LIMIT) next.splice(0, next.length - HISTORY_LIMIT)
+        return { ...prev, [symbol]: next }
+      })
+
+    const applyTick = (msg) => {
       setQuotes((prev) => {
         const cur = prev[msg.symbol] || { symbol: msg.symbol, name: msg.name }
         const close = msg.close ?? cur.close
@@ -38,6 +51,8 @@ export function useLiveFeed() {
           },
         }
       })
+      if (msg.ltp != null) pushHistory(msg.symbol, msg.ltp, msg.ts)
+    }
 
     const connect = () => {
       setStatus((s) => ({ ...s, state: 'connecting' }))
@@ -71,6 +86,9 @@ export function useLiveFeed() {
             }
             return next
           })
+          for (const q of msg.quotes) {
+            if (q.ltp != null) pushHistory(q.symbol, q.ltp, q.ts)
+          }
         } else if (msg.type === 'tick') {
           applyTick(msg)
         }
@@ -97,5 +115,5 @@ export function useLiveFeed() {
     }
   }, [])
 
-  return { status, quotes }
+  return { status, quotes, histories }
 }
